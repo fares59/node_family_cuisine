@@ -51,6 +51,7 @@ class AuthRouter extends BaseRouter {
             const response = await this.controller.renewmail(req);
             res.json(response);
             console.log(response);
+            
         });
     }
 }
