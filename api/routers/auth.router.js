@@ -33,8 +33,8 @@ class AuthRouter extends BaseRouter {
             res.json(response);
         });
         // /auth/renew
-        this.router.post("/renew", async (req, res) => {
-            const response = await this.controller.renew(req);
+        this.router.post("/renewpass", async (req, res) => {
+            const response = await this.controller.renewpass(req);
             res.json(response);
         });
         // /auth/refresh_token
@@ -46,6 +46,11 @@ class AuthRouter extends BaseRouter {
         this.router.get("/", async (req, res) => {
             const response = await this.controller.check(req);
             res.json(response);
+        });
+        this.router.post("/renewmail", async (req, res) => {
+            const response = await this.controller.renewmail(req);
+            res.json(response);
+            console.log(response);
         });
     }
 }

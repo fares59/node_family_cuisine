@@ -27,8 +27,8 @@ class AuthController extends BaseController {
             console.log('req', req.body.password);
             const result = await bcrypt.compare(req.body.password, `${HASH_PREFIX + user.mdp}`);
             if (result){
-                const token = jwt.sign({sub: user.Id_utilisateur, email: user.email, role: user.role},JWT_SECRET,{ expiresIn: "1d"}); //dans react sub
-                let response = {id:user.Id_utilisateur, email: user.email, role: user.role, token, result: true,message: "bienvenue !"};
+                const token = jwt.sign({id: user.Id_user, email: user.email, role: user.role},JWT_SECRET,{ expiresIn: "1d"}); //dans react sub
+                let response = {id:user.Id_user, email: user.email, role: user.role, token:token, result: true,message: "bienvenue !"};
                 console.log(response);
                 return response
             }
@@ -50,7 +50,7 @@ class AuthController extends BaseController {
         }
         if (payload){
             let user = {
-                'id':payload.sub,
+                'id':payload.id,
                 'email':payload.email,
                 'role':payload.role
             }
@@ -79,7 +79,7 @@ class AuthController extends BaseController {
             `
 
             <b>Confirmez votre Inscription : </b>
-            <a href="http://localhost:3000/RegisterValidation?t=${encodeURIComponent(token)}" target="_blank">Confirmer</a>
+            <a href="http://localhost:3001/RegisterValidation?t=${encodeURIComponent(token)}" target="_blank">Confirmer</a>
             `;
             await MailerService.sendMail({to: req.body.email, subject:"Confirmer votre inscription", html});
             return true;
@@ -112,9 +112,57 @@ class AuthController extends BaseController {
         // let data = {completed:true, message: "bienvenue !"};
         // return data;
     
-    renew = async (req) => {
-        return "renew";
+    
+       
+        //verif mail 
+        
+        //recueper le token 
+        //hash new pass
+        //insere new pass bdd
+        renewpass = async (req) => {
+            if(req.method !== 'POST') return {status:405};
+        
+            const token = req.body.token;
+            let payload
+            let user
+            try{
+              payload = jwt.verify(token,authconfig.JWT_SECRET);
+              user = await this.getUser(payload.mail);
+            }
+            catch{
+              return {data:{completed:false, message:"Désolé une erreur est survenue ..."}};
+            }
+            if(payload){
+              const usermodify = new UserService();
+              const password = (await bcrypt.hash(req.body.password1,8)).replace(authconfig.HASH_PREFIX,'');
+              const rows = await usermodify.updateUser({where : user.Id_user ,mdp:password});
+            return true;
+          }
+          
+          return false;
+          
+        
+        
     }
+    renewmail = async (req) =>{
+        if(req.method !== 'POST') return {status:405};
+        
+        const user = await this.getUser(req.body.email);
+        if(user){
+          const payload = {mail: req.body.email};
+          const token = jwt.sign(payload, authconfig.JWT_SECRET, { expiresIn: '1d'});
+          const html = 
+          `
+          <b>Confirmez votre inscription : </b>
+          <a href="http://localhost:3000/RenewPassword2?t=${encodeURIComponent(token)}" target="_blank">Confirmer</a>
+          
+          `;
+          await MailerService.sendMail({to: req.body.email, subject:"Confirmer votre inscription", html});
+            return true;
+        }
+        return false;
+    
+      }
   /* The above code is checking if the user has a valid token. If they do, it will return the user's
   role. */
     check = async (req) => {
