@@ -8,10 +8,10 @@ is logged in. If they are, it checks to see if the user has the correct permissi
 route. If they do, it calls the action and returns the data. If they don't, it returns an error. */
     static checkAuth = async (action, req, res, next) => {
 
-        const restricted_route = Object.keys(config.RESTRICTED_ROUTES).find(route => req.originalUrl.match(route));
-        if(restricted_route){
-            const predicate = config.RESTRICTED_ROUTES[restricted_route];
-            const auth = req.cookies.auth;
+        const route = Object.keys(config.RESTRICTED_ROUTES).find(route => req.originalUrl.match(route));
+        if(route){
+            const predicate = config.RESTRICTED_ROUTES[route];
+            const auth = req.cookies.token;
             if(auth){
                 const result = jwt.verify(auth, config.JWT_SECRET);
                 if(result && predicate(result, res.locals)){
@@ -19,12 +19,15 @@ route. If they do, it calls the action and returns the data. If they don't, it r
                     return res.json(data);
                 }
             }
+
+            //todo faire les routes du middewares.
             return res.json({result:false, message:"Unauthorized access"});
         }
         const data = await action(req, res);
         return res.json(data);
-        
+      
     }
   
-}
+} 
 module.exports = AuthMiddleware.checkAuth;
+

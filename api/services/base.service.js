@@ -75,30 +75,58 @@ class BaseService {
       }
       return false;
     }
-    else {
-      //INSERT ONE ROW
-      const columns = Object.keys(params).join(",");
-      let values = Object.values(params);
-      values = values.map((val) => {
-        return (val = "'" + val.replace(/'/g, "''") + "'");
-      });
-      values = values.join(",");
-      let sql = `INSERT INTO ${this.table} (${columns}) VALUES (${values})`;
-      const result = await BaseService.executeQuery(sql);
-      if (result.affectedRows === 1) {
-        return await this.selectOne(result.insertId);
-      }
-      return false;
-    }
-
   }
+    
+      //INSERT ONE ROW
+
+      insertUser = async (params) => {
+        const columns = Object.keys(params).join(',');
+        let values = Object.values(params);
+        values = values.map(val => {
+            return val = ('"' + val.replace('"','') + '"')
+        });// `'${val.replace("'","\'")}'`);
+        values = values.join(',')
+        let sql = `INSERT INTO ${this.table} (${columns}) VALUES (${values})`;
+        const result = await BaseService.executeQuery(sql);
+        console.log(result);
+        let row = null;
+        if(result.affectedRows === 1){
+            row = await this.selectUser(result.insertId);
+        }
+        return row;
+      
+    }
+    selectUser = async (params) => {
+      let sql = `SELECT * FROM ${this.table} WHERE Id_user=${params}`;
+      const rows = await BaseService.executeQuery(sql, [0]);
+      return rows;
+     };
+    //   const columns = Object.keys(params).join(",");
+    //   let values = Object.values(params);
+    //   values = values.map((val) => {
+    //     return (val = "'" + val.replace(/'/g, "''") + "'");
+    //   });
+    //   values = values.join(",");
+    //   let sql = `INSERT INTO ${this.table} (${columns}) VALUES (${values})`;
+    //   const result = await BaseService.executeQuery(sql);
+    //   if (result.affectedRows === 1) {
+    //     return await this.selectOne(result.insertId);
+    //   }
+    //   return false;
+    
+
+  
 
   selectWhere = async (params) => {
     let sql = `SELECT * FROM ${this.table} WHERE Id_user=${params.where}`;
     const rows = await BaseService.executeQuery(sql, [0]);
     return rows;
   };
-  
+  // selectWhere = async (params) => {
+  //   let sql = `SELECT * FROM ${this.table} WHERE Id_appuser=${params.where}`;
+  //   const rows = await BaseService.executeQuery(sql, [0]);
+  //   return this.ModelClass.from(rows);
+  //  };
 
   updateUser = async (params) => {
     const where = params.where;
@@ -110,6 +138,15 @@ class BaseService {
 
 
   }
+  
+  delete = async (params) => {
+    const where = params.where?.replaceAll('&&','AND').replaceAll('||','OR') || '0';
+    let sql = `DELETE FROM ${this.table} WHERE ${where};`;
+    const result = await DbService.executeQuery(sql);
+    return result.AffectedRows > 0;
+  }
+
+
 
 
 }

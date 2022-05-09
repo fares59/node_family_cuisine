@@ -72,14 +72,14 @@ class AuthController extends BaseController {
         
         const user = await this.getUser(req.body.email);
         if(!user){
-            const payload = {mail:req.body.email,role:1,password:req.body.password};
+            const payload = {mail:req.body.email,role:1,password:req.body.password1};
             const token = jwt.sign(payload, authconfig.JWT_SECRET, { expiresIn: '1d'});
 
             const html = 
             `
 
             <b>Confirmez votre Inscription : </b>
-            <a href="http://localhost:3001/RegisterValidation?t=${encodeURIComponent(token)}" target="_blank">Confirmer</a>
+            <a href="http://localhost:3000/RegisterValidation?t=${encodeURIComponent(token)}" target="_blank">Confirmer</a>
             `;
             await MailerService.sendMail({to: req.body.email, subject:"Confirmer votre inscription", html});
             return true;
@@ -100,7 +100,7 @@ class AuthController extends BaseController {
         if(payload){
             const service = new UserService();
             const password = (await bcrypt.hash(payload.password,8)).replace(authconfig.HASH_PREFIX,'');
-            const user = await service.insertOneOrMany({email:payload.mail, mdp:password, role:''+payload.role});
+            const user = await service.insertUser({email:payload.mail, mdp:password, role:''+payload.role});
             return user ?
                 {data:{completed:true, message:"Bienvenu sur Family Cuisine, votre compte a bien etais activé, vous pouvez vous connecter"}} :
                 {data:{completed:false, message:"Une erreur est survenue ...."}} ;
@@ -165,8 +165,8 @@ class AuthController extends BaseController {
       }
   /* The above code is checking if the user has a valid token. If they do, it will return the user's
   role. */
-    check = async (req) => {
-        const auth = req.cokies.auth;
+    Account = async (req) => {
+        const auth = req.cookies.token.auth;
         if(auth){
             const result = jwt.verify(auth, config.JWT_SECRET);
             if(result){

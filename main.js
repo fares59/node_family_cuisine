@@ -35,8 +35,10 @@ app.use(cookieParser());
 // on declare les routes
 
 const routers = require("./api/routers");
+const auth = require("./api/middelwares/auth.middewares")
 for (const route in routers) {
-  app.use(`/${route}`, new routers[route]().router);
+  const router = new routers[route]().router;
+  app.use(`/${route}`, router,auth);
 }
 ///////////////////////////////////////////////
 const PORT = 5000;
