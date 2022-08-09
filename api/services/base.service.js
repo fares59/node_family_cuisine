@@ -44,12 +44,15 @@ class BaseService {
 
   //*******le select******//
   select = async (params) => {
-    let sql = `SELECT * FROM user where deleted = ?`;
+    // let sql = `SELECT * FROM ${this.table} WHERE id_user=${params.where}`;
+    let sql = `SELECT * FROM user where deleted = 0`;
     if (params?.where) {
-      sql += ` AND (${params.where.replace('&&', 'AND').replace('||', 'OR')})`;
+     sql += ` AND ${params.where.replace('&&', 'AND').replace('||', 'OR')}`;
+      
     }
     sql += ";"
     const rows = await BaseService.executeQuery(sql, [0]);
+    console.log(sql);
     return rows;
   };
   ///////////////////////////////////////////////////////////////////
@@ -97,8 +100,9 @@ class BaseService {
       
     }
     selectUser = async (params) => {
-      let sql = `SELECT * FROM ${this.table} WHERE Id_user=${params}`;
+      let sql = `SELECT * FROM ${this.table} WHERE ${params.where}`;
       const rows = await BaseService.executeQuery(sql, [0]);
+      console.log(sql);
       return rows;
      };
     //   const columns = Object.keys(params).join(",");
@@ -132,7 +136,7 @@ class BaseService {
     const where = params.where;
     let values = params.mdp;
     let passwordField = "user.mdp";
-    let sql = `UPDATE ${this.table} SET ${passwordField} = '${values}' WHERE id_user = ${where};`;
+    let sql = `UPDATE ${this.table} SET ${passwordField} = '${values}' WHERE Id_user = ${where};`;
     const result = await BaseService.executeQuery(sql);
     return result.affectedRows > 0 ? await this.selectWhere({ where }) : false;
 

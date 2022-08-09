@@ -12,13 +12,46 @@ class AuthController extends BaseController {
         const service = new UserService();
         const users = await service.select({where:`email = '${email}'`});
         return users.length === 1 ? users.pop(): null;
+        console.log(users);
     }
+    
 
     /* Checking if the email exists in the database. */
+
+    // login = async (req) => {
+    //     const service = new UserService();
+    //     const rows = await service.select({
+    //       where: `email='${req.body.email}'`,
+    //     });
+    //     //compare pour comparer le mot de passe crypter et non crypter, ajouter la clef au mot de pass de la bdd.
+    
+    //     if (rows.length === 1) {
+    //       const user = rows.pop();
+    //       const result = await bcrypt.compare(req.body.password, `${appConfig.HASH_PREFIX + user.password}`);
+    //       if (result == true) {
+    //         const token = jwt.sign({ email: user.email, role: user.role, id: user.id_user }, config.JWT_SECRET);
+    //         console.log(id_user,"id_user");
+    //         console.log(user,"user");
+    //         console.log(role,"role");
+    //         return { completed: true, cookie: token, role: user.role };
+          
+    //       }
+         
+
+    //       else {
+
+    //         console.log(response,"resp");
+    //         console.log(id_user,"id_user");
+    //         console.log(user,"user");
+    //         console.log(role,"role");
+    //         return false;
+    //       }
+    //     }
+    //   }
     login = async (req) => {
         const service = new UserService();
         const results = await service.select({
-           where: `email = '${req.body.email} '` ,
+           where: `email="${req.body.email}"`,
         });
         const user = results.length === 1 ? results.pop() : null;
         let m = bcrypt.hashSync('test',8);
@@ -27,10 +60,14 @@ class AuthController extends BaseController {
             console.log('req', req.body.password);
             const result = await bcrypt.compare(req.body.password, `${HASH_PREFIX + user.mdp}`);
             if (result){
-                const token = jwt.sign({id: user.Id_user, email: user.email, role: user.role},JWT_SECRET,{ expiresIn: "1d"}); //dans react sub
-                let response = {id:user.Id_user, email: user.email, role: user.role, token:token, result: true,message: "bienvenue !"};
-                console.log(response);
+                const token = jwt.sign({id: user.id_user, email: user.email, role: user.role},JWT_SECRET,{ expiresIn: "1d"}); //dans react sub
+                let response = {token:token,role:user.role,id:user.id_user, result: true,message: "bienvenue !"};//{id:user.id, email: user.email, role: user.role,} 
+                // console.log(response,"resp");
+                // console.log(id_user,"id_user");
+                // console.log(user,"user");
+                // console.log(role,"role");
                 return response
+
             }
             return {result: false, message: "identifiant incorrect !"};
         }
@@ -50,7 +87,7 @@ class AuthController extends BaseController {
         }
         if (payload){
             let user = {
-                'id':payload.id,
+                'id':payload.id_user,
                 'email':payload.email,
                 'role':payload.role
             }
@@ -72,7 +109,7 @@ class AuthController extends BaseController {
         
         const user = await this.getUser(req.body.email);
         if(!user){
-            const payload = {mail:req.body.email,role:1,password:req.body.password1};
+            const payload = {mail:req.body.email,role:1,mdp:req.body.password1,mdp:req.body.password2};
             const token = jwt.sign(payload, authconfig.JWT_SECRET, { expiresIn: '1d'});
 
             const html = 
@@ -93,14 +130,16 @@ class AuthController extends BaseController {
         let payload;
         try{
             payload = jwt.verify(token, authconfig.JWT_SECRET);
+            let data = {completed:true, message: "bienvenue !"};
+            
         }
         catch{
             return {data:{completed:false, message:"Désolé une erreur est survenue ..."}};
         }
         if(payload){
             const service = new UserService();
-            const password = (await bcrypt.hash(payload.password,8)).replace(authconfig.HASH_PREFIX,'');
-            const user = await service.insertUser({email:payload.mail, mdp:password, role:''+payload.role});
+            const mdp = (await bcrypt.hash(payload.mdp,8)).replace(authconfig.HASH_PREFIX,'');
+            const user = await service.insertUser({email:payload.mail, mdp:mdp, role:''+payload.role});
             return user ?
                 {data:{completed:true, message:"Bienvenu sur Family Cuisine, votre compte a bien etais activé, vous pouvez vous connecter"}} :
                 {data:{completed:false, message:"Une erreur est survenue ...."}} ;
@@ -109,8 +148,7 @@ class AuthController extends BaseController {
     }
 
 
-        // let data = {completed:true, message: "bienvenue !"};
-        // return data;
+    
     
     
        

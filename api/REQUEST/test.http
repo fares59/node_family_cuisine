@@ -1,4 +1,11 @@
 # GET http://localhost:5000/
 # POST  http://localhost:5000
 POST  http://localhost:5000/auth/login
+Content-Type: application/json
+
+{
+    "password": "test",
+    "email": "test3@test3.fr"
+}
+
 # GET http://localhost:5000/
